@@ -16,7 +16,7 @@ function tdVisibleText($, tdEl) {
   const c = $(tdEl).clone();
   c.find("script").remove();
   return c.text().replace(/\s+/g, " ").trim();
-}
+ }
 
 export function parseCounterRows(html) {
   const $ = cheerio.load(html);
