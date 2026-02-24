@@ -4,8 +4,13 @@ import { createAuthedContext, safeClose } from "./login.js";
 import { fetchCounters } from "./countManager.js";
 import { saveSummaryToExcel, getSheetNameYYYYMM } from "./excelManager.js";
 
-const USER = "Administrator";
-const PASS = "7654321";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const USER = process.env.PRINTER_USER;
+const PASS = process.env.PRINTER_PASS;
+
 const TIMEOUTS = { action: 2500, nav: 12000 };
 
 const printers = [

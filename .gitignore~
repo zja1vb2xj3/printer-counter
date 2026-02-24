@@ -1,0 +1,16 @@
+# Secrets
+.env
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+
+# Excel outputs
+*.xlsx
+~$*.xlsx
