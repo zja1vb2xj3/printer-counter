@@ -1,0 +1,12 @@
+{
+  "name": "printer-counter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.13.5",
+    "cheerio": "^1.2.0",
+    "exceljs": "^4.4.0",
+    "playwright": "^1.58.2"
+  }
+}
