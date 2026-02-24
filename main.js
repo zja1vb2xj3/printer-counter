@@ -77,11 +77,16 @@ for (const p of printers) {
     console.log("[DEBUG] dcounter :", r.debug.dcounter.status, r.debug.dcounter.url);
   }
 
-  if (!r.ok) {
-    console.log("[RESULT] FAIL");
-    if (r.error) console.log("[ERROR]", r.error);
-    if (r.debug?.title) console.log("[DEBUG] title:", r.debug.title);
-  } else {
+ if (!r.ok) {
+  console.log("[RESULT] FAIL");
+  if (r.error) console.log("[ERROR]", r.error);
+  if (r.debug?.title) console.log("[DEBUG] title:", r.debug.title);
+
+  console.log("프로그램 종료 (수동 재실행 필요)");
+  process.exit(1);   // 🔴 즉시 종료
+} 
+
+else {
     console.log("[RESULT] SUCCESS");
     for (const line of r.lines) console.log(line);
   }
