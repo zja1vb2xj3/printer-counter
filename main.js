@@ -1,10 +1,14 @@
-
 // main.js
 import { createAuthedContext, safeClose } from "./login.js";
 import { fetchCounters } from "./countManager.js";
-import { saveSummaryToExcel, getSheetNameYYYYMM } from "./excelManager.js";
+import {
+  saveSummaryToExcel,
+  getSheetNameYYYYMM,
+  parseSummaryLines,
+  pivotSummaryRows,
+} from "./excelManager.js";
 
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -36,6 +40,21 @@ function buildConfig(base) {
     TIMEOUTS,
     headless: true,
   };
+}
+
+function formatOneLineSummary(comment, lines) {
+  // lines: ["장소\t흑백\t45252", "장소\t컬러\t36860", ...]
+  const longRows = parseSummaryLines(lines);
+  const wideRows = pivotSummaryRows(longRows);
+
+  // 정상이라면 해당 프린터는 place 1개만 나와야 함(그래도 방어)
+  const row = wideRows[0];
+  const bw = row?.bw ?? 0;
+  const color = row?.color ?? 0;
+
+  // 원하는 콘솔 형태: "관리동 1층 1 28280 113805"
+  // (구분문자 최소화, \n, 탭 제거)
+  return `${comment} ${bw} ${color}`;
 }
 
 async function runOnePrinter(printer) {
@@ -77,38 +96,48 @@ for (const p of printers) {
     console.log("[DEBUG] dcounter :", r.debug.dcounter.status, r.debug.dcounter.url);
   }
 
- if (!r.ok) {
-  console.log("[RESULT] FAIL");
-  if (r.error) console.log("[ERROR]", r.error);
-  if (r.debug?.title) console.log("[DEBUG] title:", r.debug.title);
+  if (!r.ok) {
+    console.log("[RESULT] FAIL");
+    if (r.error) console.log("[ERROR]", r.error);
+    if (r.debug?.title) console.log("[DEBUG] title:", r.debug.title);
 
-  console.log("프로그램 종료 (수동 재실행 필요)");
-  process.exit(1);   // 🔴 즉시 종료
-} 
-
-else {
+    console.log("프로그램 종료 (수동 재실행 필요)");
+    process.exit(1); // 🔴 즉시 종료
+  } else {
     console.log("[RESULT] SUCCESS");
-    for (const line of r.lines) console.log(line);
+
+    // ✅ 콘솔은 1줄 요약만 출력
+    console.log(formatOneLineSummary(r.comment, r.lines));
   }
+
   console.log("====================================");
 }
 
 // SUMMARY 출력 + 엑셀 저장
 console.log("\n==== SUMMARY (BW/COLOR) ====");
 
+// 엑셀 저장용: 세로형 원본 라인만 수집
 const summaryLines = [];
 for (const r of results) {
   if (!r.ok) continue;
   for (const line of r.lines) {
-    console.log(line);
     summaryLines.push(line);
   }
 }
 
-// ✅ 여기서부터 엑셀 저장은 excelManager가 전담
+// ✅ SUMMARY 콘솔도 동일한 1줄 형식으로 전체 출력(원하면 이 블록 삭제 가능)
+const allLong = parseSummaryLines(summaryLines);
+const allWide = pivotSummaryRows(allLong);
+
+for (const row of allWide) {
+  const bw = row.bw ?? 0;
+  const color = row.color ?? 0;
+  console.log(`${row.place} ${bw} ${color}`);
+}
+
+// 엑셀 저장
 const sheetName = getSheetNameYYYYMM(new Date()); // 예: 2026.02
 const filePath = "./printer_counters.xlsx";
 
-// mode: "replace" (같은 월 시트 덮어쓰기) / "append"(누적)
 const saved = await saveSummaryToExcel(summaryLines, { filePath, sheetName, mode: "replace" });
 console.log(`[SAVED] ${saved.filePath} (sheet: ${saved.sheetName}, rows: ${saved.rowCount})`);
